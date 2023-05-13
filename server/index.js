@@ -8,8 +8,8 @@ const JWT_SECRET = "secretJwt";
 const bodyParser = require("body-parser");
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
-//const cors = require("cors");
-//app.use(cors());
+const cors = require("cors");
+app.use(cors());
 app.use(jsonParser);
 const SUBMISSIONS = [];
 const USERS = [];
@@ -169,6 +169,10 @@ app.post("/submission", auth, (req, res) => {
 app.post("/signup", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  if (email.length < 1) {
+    return res.status(403).json({ msg: "Incorrect Email" });
+  }
+  console.log(`received email ${email}`);
   if (USERS.find((x) => x.email === email)) {
     return res.status(403).json({ msg: "Email already exists" });
   }
@@ -190,7 +194,7 @@ app.post("/login", (req, res) => {
 
   const user = USERS.find((x) => x.email === email);
   if (!user) {
-    return res.status(403).json({ msg: "Usern not found" });
+    return res.status(403).json({ msg: "User not found" });
   }
 
   if (user.password !== password) {

@@ -1,30 +1,48 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import "./Signup.css"
+
+
 const Signup = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("")
+
+  const handleSubmit = async () => {
+    const response = await fetch("http://localhost:3000/signup", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+      })
+    })
+
+    const json = await response.json();
+    console.log(json)
+  }
+
   return (
     <div id="signup" className='flex-col'>
       <h1>Signup</h1>
-      <form className='signup-form' method="post" action='/signup' >
-
-        <div className='subform'>
-          <label htmlFor="name">Name: </label>
-          <input type="text" name='name' placeholder='Your Name' />
-        </div>
+      <div className='signup-form'>
 
         <div className='subform'>
           <label htmlFor="email">Email: </label>
-          <input type="text" name='email' placeholder='Your Email' />
+          <input onChange={(e) => { setEmail(e.target.value) }} type="text" name='email' placeholder='Your Email' />
         </div>
-        
+
         <div className='subform'>
           <label htmlFor="password">Password: </label>
-          <input type="text" name='password' placeholder='Your Password' />
+          <input onChange={(e) => setPassword(e.target.value)} type="password" name='password' placeholder='Your Password' />
         </div>
-        
-      </form>
+
+        <button type="submit" id="test" onClick={handleSubmit}>SignUp</button>
+
+      </div>
     </div>
   )
 }
 
-export default Signup
+export default Signup;
