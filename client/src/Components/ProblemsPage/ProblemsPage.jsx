@@ -8,7 +8,8 @@ const ProblemsPage = ({ problems }) => {
   const [CodeSeg, setCodeSeg] = useState("");
   const { pid } = useParams();
   const cleanId = pid.substring(1);
-  const [problem, setProblem] = useState(null)
+  const [problem, setProblem] = useState(null);
+  const [submission, setSubmission] = useState("");
 
   const init = async () => {
     const response = await fetch("http://localhost:3000/problems/" + cleanId, {
@@ -48,18 +49,31 @@ const ProblemsPage = ({ problems }) => {
             </div>
             <div className="code">
               <h1>Code Here</h1>
-              <form className='code-form' method="post" action='/runprogram' >
-                <textarea name="SolvedCode" onKeyDown={(event) => handleKey(event)}></textarea>
-                <button type="submit" id="test">TestCode</button>
-                <button type="submit" id="submit">SubmitCode</button>
-              </form>
+              <div className='code-form'>
+                <textarea name="SolvedCode" value={submission} onChange={(e) => { setSubmission(e.target.value) }} onKeyDown={(event) => handleKey(event)}></textarea>
+                <button type="submit" id="submit" onClick={async (e) => {
+                  const response = await fetch("http://localhost:3000/submission", {
+                    method: "POST",
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'authorization': localStorage.getItem("token"),
+                    },
+                    body: JSON.stringify({
+                      "problemId": cleanId,
+                      "submission": submission,
+                    })
+                  })
+                  const json = await response.json()
+                  console.log(json)
+                }}>SubmitCode</button>
+              </div>
             </div>
           </div>
         ) :
           (<div>The searched Question Doesn't exist</div>)
       }
 
-    </div>
+    </div >
 
   )
 }
