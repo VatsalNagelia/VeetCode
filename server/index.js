@@ -3,6 +3,8 @@ const app = express();
 const port = 3000;
 var jwt = require("jsonwebtoken");
 const { auth } = require("./middleware.js");
+const Docker = require("dockerode");
+const docker = new Docker();
 let USER_ID_COUNTER = 1;
 const JWT_SECRET = "secretJwt";
 const bodyParser = require("body-parser");
@@ -139,10 +141,14 @@ app.get("/submission/:problemId", auth, (req, res) => {
   });
 });
 
-app.post("/submission", auth, (req, res) => {
-  const isCorrect = Math.random() < 0.5;
+app.post("/submission", auth, async (req, res) => {
   const problemId = req.body.problemId;
   const submission = req.body.submission;
+
+  // You should define the test cases and expected results for each problem
+  const testCases = getTestCasesForProblem(problemId);
+
+  const isCorrect = await runCppCode(submission, testCases);
 
   if (isCorrect) {
     SUBMISSIONS.push({
@@ -166,6 +172,81 @@ app.post("/submission", auth, (req, res) => {
     });
   }
 });
+
+async function runCppCode(code, testCases) {
+  // Create a temporary directory to store the submitted code and test cases
+  // You can use the 'tmp' library (https://www.npmjs.com/package/tmp) to create temporary directories
+
+  // Write the submitted code to a .cpp file in the temporary directory
+
+  // Write the test cases to a separate file in the temporary directory
+
+  // Run the Docker container, mounting the temporary directory to /usr/src/app
+  const container = await docker.createContainer({
+    Image: "cpp-runner",
+    Cmd: [
+      "/bin/bash",
+      "-c",
+      "g++ -o solution solution.cpp && ./solution < input.txt > output.txt",
+    ],
+    Binds: ["/path/to/temporary/directory:/usr/src/app"],
+  });
+
+  await container.start();
+
+  // Wait for the container to finish executing
+  await new Promise((resolve) => container.once("stop", resolve));
+
+  // Read the output.txt file from the temporary directory and compare it with the expected results
+
+  // Return the evaluation result (AC or WA)
+
+  // Clean up the temporary directory and remove the container
+  await container.remove();
+
+  // ... (previous steps of runCppCode function)
+
+  // Read the output.txt file from the temporary directory
+  const output = fs.readFileSync(
+    "/path/to/temporary/directory/output.txt",
+    "utf8"
+  );
+
+  // Compare the output with the expected results
+  const isCorrect = testCases.every(({ input, expectedOutput }) => {
+    // Execute the code with the input and compare the result with the expected output
+    // You can use a function like `runSingleTestCase` to execute the code with the input
+    const result = runSingleTestCase(code, input);
+    return result === expectedOutput;
+  });
+
+  // Return the evaluation result (true for AC, false for WA)
+
+  // ... (clean up the temporary directory and remove the container)
+
+  return isCorrect;
+}
+
+function getTestCasesForProblem(problemId) {
+  // Define test cases and expected results for each problem
+  // Example:
+  // {
+  //   "1": [
+  //     { input: "5 7\n", expectedOutput: "4\n" },
+  //     { input: "10 12\n", expectedOutput: "8\n" }
+  //   ],
+  //   "2": [
+  //     { input: "100 200\n", expectedOutput: "300\n" },
+  //     { input: "500 700\n", expectedOutput: "1200\n" }
+  //   ]
+  // }
+  const problemTestCases = {
+    // ... test cases for each problem
+  };
+
+  return problemTestCases[problemId] || [];
+}
+
 app.post("/signup", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
