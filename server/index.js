@@ -13,6 +13,8 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const cors = require("cors");
 app.use(cors());
 app.use(jsonParser);
+const { connectQueue, sendData } = require("./rabbitMQConnection.js");
+
 const SUBMISSIONS = [];
 const USERS = [];
 const PROBLEMS = [
@@ -93,6 +95,17 @@ const PROBLEMS = [
     exampleOut: "1->3",
   },
 ];
+
+app.get("/send-msg", async (req, res) => {
+  await connectQueue();
+  const data = {
+    name: "vatsal",
+    learning: "fullstackdev",
+  };
+  await sendData(data);
+
+  res.send("Hello World");
+});
 
 app.get("/", (req, res) => {
   res.json({
