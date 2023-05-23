@@ -10,6 +10,8 @@ const ProblemsPage = ({ problems }) => {
   const cleanId = pid.substring(1);
   const [problem, setProblem] = useState(null);
   const [submission, setSubmission] = useState("");
+  const [userSubmission, setUserSubmission] = useState(null)
+
 
   const init = async () => {
     const response = await fetch("http://localhost:3000/problems/" + cleanId, {
@@ -19,8 +21,24 @@ const ProblemsPage = ({ problems }) => {
     setProblem(json.problem)
   }
 
+  const fetchSubmission = async () => {
+    const token = localStorage.getItem("token")
+    if (token) {
+      const response = await fetch("http://localhost:3000/submission/" + cleanId, {
+        method: "GET",
+        headers: {
+          "authorization": token
+        }
+      })
+      const json = await response.json()
+      setUserSubmission(json.submissions)
+      console.log(json.submissions)
+    }
+  }
+
   useEffect(() => {
     init();
+    fetchSubmission();
   }, [])
 
   const handleKey = (event) => {
@@ -68,6 +86,19 @@ const ProblemsPage = ({ problems }) => {
                 }}>SubmitCode</button>
               </div>
             </div>
+            {
+              localStorage.getItem("token") && userSubmission &&
+              <div>
+                <h1>Your Submissions</h1>
+                {userSubmission.map((sub, i) => {
+                  return (
+                    <div key={i}>
+                      <p>Submission {i + 1} (Status:{sub.status})</p>
+                    </div>
+                  )
+                })}
+              </div>
+            }
           </div>
         ) :
           (<div>The searched Question Doesn't exist</div>)
