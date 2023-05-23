@@ -9,6 +9,9 @@ const bodyParser = require("body-parser");
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const cors = require("cors");
+const amqp = require("amqplib/callback_api");
+const pgp = require("pg-promise")();
+const db = pgp("postgres://vatsal:admin@localhost:5432/coding_test");
 app.use(cors());
 app.use(jsonParser);
 const SUBMISSIONS = [];
@@ -143,7 +146,17 @@ app.post("/submission", auth, (req, res) => {
   const isCorrect = Math.random() < 0.5;
   const problemId = req.body.problemId;
   const submission = req.body.submission;
+  const userId = req.userId;
 
+  amqp.connect("amqp://localhost", function (err, conn) {
+    conn.createChannel(function (err, ch) {
+      const q = "submissions";
+      const msg = JSON.stringify({ submission, problemId, userId });
+
+      ch.assertQueue(q, { durable: true });
+      ch.sendToQueue(q, Buffer.from(msg), { persistent: true });
+    });
+  });
   if (isCorrect) {
     SUBMISSIONS.push({
       submission,
@@ -152,6 +165,7 @@ app.post("/submission", auth, (req, res) => {
       status: "AC",
     });
     return res.json({
+      received: "yes",
       status: "AC",
     });
   } else {
@@ -162,6 +176,7 @@ app.post("/submission", auth, (req, res) => {
       status: "WA",
     });
     return res.json({
+      received: "yes",
       status: "WA",
     });
   }
